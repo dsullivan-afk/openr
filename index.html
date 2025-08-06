@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stealth URL Opener</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            overflow: hidden;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 10000;
+        }
+        .container.collapsed {
+            height: 50px;
+            overflow: hidden;
+            padding: 10px;
+        }
+        h2 {
+            color: #fff;
+            margin: 0 0 20px;
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #fff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.4s ease;
+        }
+        button:hover::before {
+            left: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .open-btn {
+            background: #00b4d8;
+        }
+        .collapse-btn {
+            background: #f48c06;
+        }
+        .close-btn {
+            background: #dc3545;
+        }
+        .glow {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="container" id="stealthContainer">
+        <h2>Stealth URL Opener</h2>
+        <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)">
+        <input type="text" id="titleInput" placeholder="Enter tab title (e.g., New Tab)">
+        <div class="button-group">
+            <button class="open-btn" onclick="openStealth()">Open</button>
+            <button class="collapse-btn" onclick="toggleCollapse()">Collapse</button>
+            <button class="close-btn" onclick="closeWindow()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function openStealth() {
+            const url = document.getElementById('urlInput').value;
+            const title = document.getElementById('titleInput').value || 'New Tab';
+            if (url) {
+                const newWindow = window.open('', '_blank');
+                if (newWindow) {
+                    newWindow.document.title = title;
+                    const iframe = newWindow.document.createElement('iframe');
+                    iframe.src = url;
+                    iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+                    newWindow.document.body.style.margin = '0';
+                    newWindow.document.body.appendChild(iframe);
+                    window.history.replaceState(null, '', window.location.href);
+                }
+            }
+        }
+
+        function toggleCollapse() {
+            const container = document.getElementById('stealthContainer');
+            container.classList.toggle('collapsed');
+            const collapseBtn = document.querySelector('.collapse-btn');
+            collapseBtn.textContent = container.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+        }
+
+        function closeWindow() {
+            window.close();
+        }
+
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                openStealth();
+            }
+        });
+
+        document.getElementById('titleInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                openStealth();
+            }
+        });
+    </script>
+</body>
+</html>
