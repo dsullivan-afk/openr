@@ -108,6 +108,29 @@
             opacity: 1;
             visibility: visible;
         }
+        .tab-preview {
+            display: flex;
+            align-items: center;
+            background: #e0e0e0;
+            border-radius: 8px 8px 0 0;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #333;
+            max-width: 300px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .tab-preview img {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            display: none;
+        }
+        .tab-preview img.show {
+            display: inline-block;
+        }
         @media (max-width: 600px) {
             .container {
                 margin: 20px;
@@ -115,6 +138,9 @@
             }
             .section {
                 padding: 15px;
+            }
+            .tab-preview {
+                max-width: 100%;
             }
         }
     </style>
@@ -128,8 +154,24 @@
             <h2>Stealth URL Opener</h2>
             <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)">
             <input type="text" id="titleInput" placeholder="Enter tab title (e.g., New Tab)">
+            <select id="faviconSelect" class="tooltip" data-tooltip="Choose an icon to disguise the new tab">
+                <option value="none">No Icon (Default)</option>
+                <option value="globe">Generic Globe</option>
+                <option value="google">Google-like G</option>
+                <option value="wikipedia">Wikipedia-like W</option>
+                <option value="youtube">YouTube-like Play</option>
+                <option value="twitter">Twitter-like Bird</option>
+                <option value="github">GitHub-like Octocat</option>
+                <option value="document">Document</option>
+                <option value="star">Star</option>
+                <option value="blank">Blank (Transparent)</option>
+            </select>
+            <div class="tab-preview" id="tabPreview">
+                <img id="previewIcon" src="" alt="Tab Icon">
+                <span id="previewTitle">New Tab</span>
+            </div>
             <div class="button-group">
-                <button class="tooltip" onclick="openStealth()" data-tooltip="Open the URL in a new tab with a custom title">Open URL</button>
+                <button class="tooltip" onclick="openStealth()" data-tooltip="Open the URL in a new tab with a custom title and icon to disguise it">Open URL</button>
                 <button class="tooltip" onclick="closeWindow()" data-tooltip="Close this window">Close</button>
             </div>
         </div>
@@ -171,10 +213,25 @@
     </div>
 
     <script>
+        // Favicon Data (Base64-encoded 16x16 PNGs)
+        const favicons = {
+            none: '',
+            globe: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAtElEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgAAAO/2oK2E4eRwAAAABJRU5ErkJggg==',
+            google: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABY0lEQVR42mNgwAMaGhoa/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBgYGBgYAAAAASUVORK5CYII=',
+            wikipedia: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABrklEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBgYGBgYAAAAASUVORK5CYII=',
+            youtube: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvUlEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGBgYAAAAASUVORK5CYII=',
+            twitter: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAuUlEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGBgYAAAAASUVORK5CYII=',
+            github: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwUlEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGBgYAAAAASUVORK5CYII=',
+            document: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAt0lEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGBgYAAAAASUVORK5CYII=',
+            star: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAuElEQVR42mNgwAMaGRkZ/2H8//8/BgaG//8ZGBlZGRkYGBgY/jNg+PDh/////38DA4P//4yMjAwMDAwMDP//MTIyMjAwMDAw/P/HyMjIwMDAwPD/AyMjIwMDg4P//5mZmRkaGhoaGhr+/2dkZGRgYGBg+P+fkZGRgYGBgeH//2ZmZmBgYGD4/5+RkZGBgYGB4f9/RkZGBgYGBob//xkZGRkZGBgYGBoY/w9kZGRkYGBgYGD4/5+RkZGBgYGBgYAAAAASUVORK5CYII=',
+            blank: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVDhPY2AYBaNgFIxCZGBoYABWQQAAh/4ZHgAAAABJRU5ErkJggg=='
+        };
+
         // Stealth URL Opener
         function openStealth() {
             const url = document.getElementById('urlInput').value;
             const title = document.getElementById('titleInput').value || 'New Tab';
+            const favicon = document.getElementById('faviconSelect').value;
             const openBtn = document.querySelector('.section:nth-child(1) button:first-child');
             openBtn.disabled = true;
             openBtn.textContent = 'Opening...';
@@ -192,6 +249,13 @@
                 return;
             }
             newWindow.document.title = title;
+            if (favicon !== 'none') {
+                const link = newWindow.document.createElement('link');
+                link.rel = 'icon';
+                link.type = 'image/png';
+                link.href = favicons[favicon];
+                newWindow.document.head.appendChild(link);
+            }
             const iframe = newWindow.document.createElement('iframe');
             iframe.src = url;
             iframe.sandbox = 'allow-scripts allow-same-origin';
@@ -216,6 +280,22 @@
 
         function closeWindow() {
             window.close();
+        }
+
+        // Update Tab Preview
+        function updateTabPreview() {
+            const favicon = document.getElementById('faviconSelect').value;
+            const title = document.getElementById('titleInput').value || 'New Tab';
+            const previewIcon = document.getElementById('previewIcon');
+            const previewTitle = document.getElementById('previewTitle');
+            previewTitle.textContent = title;
+            if (favicon === 'none' || favicon === 'blank') {
+                previewIcon.classList.remove('show');
+                previewIcon.src = '';
+            } else {
+                previewIcon.src = favicons[favicon];
+                previewIcon.classList.add('show');
+            }
         }
 
         // URL Encoder/Decoder
@@ -284,7 +364,7 @@
             }
         }
 
-        // Event Listeners for Enter Key
+        // Event Listeners
         document.getElementById('urlInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') openStealth();
         });
@@ -293,6 +373,9 @@
             if (e.key === 'Enter') openStealth();
         });
 
+        document.getElementById('titleInput').addEventListener('input', updateTabPreview);
+        document.getElementById('faviconSelect').addEventListener('change', updateTabPreview);
+
         document.getElementById('pingInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') simulatePing();
         });
@@ -300,6 +383,9 @@
         document.getElementById('hashInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') generateHash();
         });
+
+        // Initialize Tab Preview
+        updateTabPreview();
     </script>
 </body>
 </html>
