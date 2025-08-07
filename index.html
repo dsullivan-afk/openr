@@ -3,165 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stealth URL Opener</title>
+    <title>Web Utility Toolkit</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
         }
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            width: 400px;
+        }
+        h1 {
             text-align: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 10000;
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 30px;
         }
-        .container.collapsed {
-            height: 50px;
-            overflow: hidden;
-            padding: 10px;
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
         }
-        h2 {
-            color: #fff;
-            margin: 0 0 20px;
-            font-size: 24px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        .section h2 {
+            margin: 0 0 15px;
+            color: #34495e;
+            font-size: 20px;
         }
-        input {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             font-size: 16px;
-            transition: background 0.3s ease;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
         }
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        input:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
-            background: rgba(255, 255, 255, 0.25);
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        input::placeholder, textarea::placeholder {
+            color: #999;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
         }
         .button-group {
             display: flex;
             gap: 10px;
-            justify-content: center;
+            flex-wrap: wrap;
         }
         button {
-            padding: 12px 24px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
+            border-radius: 6px;
+            background: #3498db;
             color: #fff;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
             position: relative;
-            overflow: hidden;
-        }
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.4s ease;
-        }
-        button:hover::before {
-            left: 100%;
         }
         button:hover {
+            background: #2980b9;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
-        .open-btn {
-            background: #00b4d8;
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
-        .collapse-btn {
-            background: #f48c06;
+        .tooltip {
+            position: relative;
         }
-        .close-btn {
-            background: #dc3545;
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 10;
         }
-        .glow {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -1;
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                padding: 20px;
+            }
+            .section {
+                padding: 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="glow"></div>
-    <div class="container" id="stealthContainer">
-        <h2>Stealth URL Opener</h2>
-        <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)">
-        <input type="text" id="titleInput" placeholder="Enter tab title (e.g., New Tab)">
-        <div class="button-group">
-            <button class="open-btn" onclick="openStealth()">Open</button>
-            <button class="collapse-btn" onclick="toggleCollapse()">Collapse</button>
-            <button class="close-btn" onclick="closeWindow()">Close</button>
+    <div class="container">
+        <h1>Web Utility Toolkit</h1>
+
+        <!-- Stealth URL Opener -->
+        <div class="section">
+            <h2>Stealth URL Opener</h2>
+            <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)">
+            <input type="text" id="titleInput" placeholder="Enter tab title (e.g., New Tab)">
+            <div class="button-group">
+                <button class="tooltip" onclick="openStealth()" data-tooltip="Open the URL in a new tab with a custom title">Open URL</button>
+                <button class="tooltip" onclick="closeWindow()" data-tooltip="Close this window">Close</button>
+            </div>
+        </div>
+
+        <!-- URL Encoder/Decoder -->
+        <div class="section">
+            <h2>URL Encoder/Decoder</h2>
+            <textarea id="urlText" placeholder="Enter text to encode/decode"></textarea>
+            <div class="button-group">
+                <button class="tooltip" onclick="encodeURL()" data-tooltip="Encode text for safe use in URLs">Encode</button>
+                <button class="tooltip" onclick="decodeURL()" data-tooltip="Decode URL-encoded text">Decode</button>
+            </div>
+        </div>
+
+        <!-- Network Ping Simulator -->
+        <div class="section">
+            <h2>Network Ping Simulator</h2>
+            <input type="text" id="pingInput" placeholder="Enter IP or hostname (e.g., 8.8.8.8)">
+            <div class="button-group">
+                <button class="tooltip" onclick="simulatePing()" data-tooltip="Simulate a network ping to the specified IP or hostname">Ping</button>
+            </div>
+            <textarea id="pingOutput" readonly placeholder="Ping results..."></textarea>
+        </div>
+
+        <!-- Hash Generator -->
+        <div class="section">
+            <h2>Hash Generator</h2>
+            <input type="text" id="hashInput" placeholder="Enter text to hash">
+            <select id="hashType">
+                <option value="md5">MD5</option>
+                <option value="sha1">SHA-1</option>
+                <option value="sha256">SHA-256</option>
+            </select>
+            <div class="button-group">
+                <button class="tooltip" onclick="generateHash()" data-tooltip="Generate a cryptographic hash of the input text">Generate Hash</button>
+            </div>
+            <textarea id="hashOutput" readonly placeholder="Hash result..."></textarea>
         </div>
     </div>
 
     <script>
+        // Stealth URL Opener
         function openStealth() {
             const url = document.getElementById('urlInput').value;
             const title = document.getElementById('titleInput').value || 'New Tab';
-            if (url) {
-                const newWindow = window.open('', '_blank');
-                if (newWindow) {
-                    newWindow.document.title = title;
-                    const iframe = newWindow.document.createElement('iframe');
-                    iframe.src = url;
-                    iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
-                    newWindow.document.body.style.margin = '0';
-                    newWindow.document.body.appendChild(iframe);
-                    window.history.replaceState(null, '', window.location.href);
-                }
+            const openBtn = document.querySelector('.section:nth-child(1) button:first-child');
+            openBtn.disabled = true;
+            openBtn.textContent = 'Opening...';
+            if (!isValidURL(url)) {
+                alert('Invalid URL. Ensure it starts with http:// or https://');
+                openBtn.disabled = false;
+                openBtn.textContent = 'Open URL';
+                return;
             }
+            const newWindow = window.open('', '_blank');
+            if (!newWindow) {
+                alert('Pop-up blocked. Please allow pop-ups for this site.');
+                openBtn.disabled = false;
+                openBtn.textContent = 'Open URL';
+                return;
+            }
+            newWindow.document.title = title;
+            const iframe = newWindow.document.createElement('iframe');
+            iframe.src = url;
+            iframe.sandbox = 'allow-scripts allow-same-origin';
+            iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+            newWindow.document.body.style.margin = '0';
+            newWindow.document.body.appendChild(iframe);
+            window.history.replaceState(null, '', window.location.href);
+            setTimeout(() => {
+                openBtn.disabled = false;
+                openBtn.textContent = 'Open URL';
+            }, 1000);
         }
 
-        function toggleCollapse() {
-            const container = document.getElementById('stealthContainer');
-            container.classList.toggle('collapsed');
-            const collapseBtn = document.querySelector('.collapse-btn');
-            collapseBtn.textContent = container.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+        function isValidURL(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
         }
 
         function closeWindow() {
             window.close();
         }
 
-        document.getElementById('urlInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                openStealth();
+        // URL Encoder/Decoder
+        function encodeURL() {
+            const text = document.getElementById('urlText').value;
+            document.getElementById('urlText').value = encodeURIComponent(text);
+        }
+
+        function decodeURL() {
+            const text = document.getElementById('urlText').value;
+            try {
+                document.getElementById('urlText').value = decodeURIComponent(text);
+            } catch (e) {
+                alert('Invalid encoded URL');
             }
+        }
+
+        // Network Ping Simulator
+        function simulatePing() {
+            const host = document.getElementById('pingInput').value;
+            const output = document.getElementById('pingOutput');
+            const pingBtn = document.querySelector('.section:nth-child(3) button');
+            pingBtn.disabled = true;
+            pingBtn.textContent = 'Pinging...';
+            if (!host) {
+                output.value = 'Error: Enter a valid IP or hostname';
+                pingBtn.disabled = false;
+                pingBtn.textContent = 'Ping';
+                return;
+            }
+            output.value = `Pinging ${host}...\n`;
+            setTimeout(() => {
+                const fakeResponse = `Reply from ${host}: bytes=32 time=${Math.random() * 100 | 0}ms TTL=128\n`.repeat(4);
+                output.value += fakeResponse + `Ping statistics for ${host}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`;
+                pingBtn.disabled = false;
+                pingBtn.textContent = 'Ping';
+            }, 1000);
+        }
+
+        // Hash Generator
+        async function generateHash() {
+            const text = document.getElementById('hashInput').value;
+            const type = document.getElementById('hashType').value;
+            const output = document.getElementById('hashOutput');
+            const hashBtn = document.querySelector('.section:nth-child(4) button');
+            hashBtn.disabled = true;
+            hashBtn.textContent = 'Generating...';
+            if (!text) {
+                output.value = 'Error: Enter text to hash';
+                hashBtn.disabled = false;
+                hashBtn.textContent = 'Generate Hash';
+                return;
+            }
+            try {
+                const msgBuffer = new TextEncoder().encode(text);
+                const hashBuffer = await crypto.subtle.digest(type.toUpperCase(), msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                output.value = hashHex;
+                hashBtn.disabled = false;
+                hashBtn.textContent = 'Generate Hash';
+            } catch (e) {
+                output.value = 'Error: Hashing failed. Ensure browser supports Web Crypto API.';
+                hashBtn.disabled = false;
+                hashBtn.textContent = 'Generate Hash';
+            }
+        }
+
+        // Event Listeners for Enter Key
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') openStealth();
         });
 
         document.getElementById('titleInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                openStealth();
-            }
+            if (e.key === 'Enter') openStealth();
+        });
+
+        document.getElementById('pingInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') simulatePing();
+        });
+
+        document.getElementById('hashInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateHash();
         });
     </script>
 </body>
